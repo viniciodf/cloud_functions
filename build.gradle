@@ -1,0 +1,43 @@
+plugins {
+	id 'org.springframework.boot' version '2.3.5.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+	id 'java'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	springFox = "2.10.5"
+}
+
+dependencies {
+
+	implementation 'com.google.cloud:google-cloud-functions:2.3.8'
+	implementation 'com.google.auth:google-auth-library-appengine:1.5.3'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.4.0'
+
+	// spring boot web
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// swagger
+	implementation "io.springfox:springfox-swagger2:${springFox}"
+	implementation "io.springfox:springfox-data-rest:${springFox}"
+	implementation "io.springfox:springfox-swagger-ui:${springFox}"
+
+	//lombok
+	implementation 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+}

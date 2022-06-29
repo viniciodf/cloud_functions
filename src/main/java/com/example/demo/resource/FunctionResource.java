@@ -4,9 +4,14 @@ import com.example.demo.model.Function;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.MonitoredResource;
 import com.google.cloud.functions.v1.*;
+import com.google.cloud.logging.*;
+import com.google.common.collect.ImmutableMap;
 import com.google.iam.v1.Binding;
 import com.google.iam.v1.SetIamPolicyRequest;
+import com.google.protobuf.Any;
+import com.google.protobuf.StringValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,14 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 @RestController
 public class FunctionResource {
 
     @PostMapping("/functions")
     String newFunction(@RequestBody Function functionRequest) throws Exception {
+        Credentials myCredentials = ServiceAccountCredentials.fromStream(new FileInputStream("/Users/vinicio/dev/auth.json"));
         try {
-            Credentials myCredentials = ServiceAccountCredentials.fromStream(new FileInputStream("/Users/vinicio/dev/auth.json"));
             String location = LocationName.of(functionRequest.getProjectId(), "us-central1").toString();
 
             CloudFunctionsServiceSettings settings = CloudFunctionsServiceSettings.newBuilder()
@@ -45,6 +52,24 @@ public class FunctionResource {
 
             return response.getName() + " - " + response.getHttpsTrigger().getUrl();
         } catch (Exception e) {
+
+            Logging logging = LoggingOptions.newBuilder().setCredentials(myCredentials).build().getService();
+            Map<String, String> payload =
+                    ImmutableMap.of(
+                            "function", functionRequest.getName(), "projectCustom", functionRequest.getProjectId(), "paramTest", "alou");
+
+            Payload.JsonPayload payloadAudit = Payload.JsonPayload.of(payload);
+
+            LogEntry entry =
+                    LogEntry.newBuilder(payloadAudit)
+                            .setSeverity(Severity.INFO)
+                            .setLogName("testLog")
+                            .setResource(MonitoredResource.newBuilder("global").build())
+                            .build();
+
+            logging.write(Collections.singleton(entry));
+
+
             e.printStackTrace();
             throw e;
         }
